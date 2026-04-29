@@ -39,7 +39,7 @@ The calculator simulates investment growth over time:
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - FastAPI
@@ -53,7 +53,7 @@ The calculator simulates investment growth over time:
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### Clone the Repository
 ```bash
