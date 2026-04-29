@@ -10,12 +10,12 @@ It helps users understand how their investments grow over time based on:
 
 ---
 
-## 🚀 Features
+## Features
 
-- 💰 Calculates investment growth over time
-- 📊 Interactive chart visualization (Chart.js)
-- 📅 Supports monthly or annual contributions
-- 📈 Shows:
+- Calculates investment growth over time
+- Interactive chart visualization (Chart.js)
+- Supports monthly or annual contributions
+- Shows:
   - Final portfolio value
   - Total contributions
   - Interest earned
@@ -23,7 +23,7 @@ It helps users understand how their investments grow over time based on:
 
 ---
 
-## 🧠 How It Works
+## How It Works
 
 The calculator simulates investment growth over time:
 
@@ -68,8 +68,7 @@ venv\Scripts\activate      # Windows
 ```
 
 ### Install Dependendicies
-```pip install -r requirements.txt
-```
+```pip install -r requirements.txt```
 
 ### Run the App
 ```uvicorn main:app --reload```
