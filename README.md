@@ -1,25 +1,34 @@
-# ROI Investment Calculator
+# ROI Investment Calculator for Nonprofits
 
 A simple web-based investment calculator built with **FastAPI** and a lightweight frontend using **HTML + JavaScript (Chart.js)**.
 
-It helps users understand how their investments grow over time based on:
-- Initial investment
-- Regular contributions
-- Expected annual return
-- Investment duration
+It helps users understand how their investments can potentially grow over time, and it also highlights how additional funding generated from investment growth can translate into **real-world impact.**
 
 ---
 
 ## Features
 
-- Calculates investment growth over time
-- Interactive chart visualization (Chart.js)
-- Supports monthly or annual contributions
-- Shows:
+### Investment Modeling
+- Calculates investment growth over time from:
+  - Initial investment
+  - Expected annual rate of return
+  - Investment duration
+  - Recurring contributions (monthly or annual)
+- Displays:
   - Final portfolio value
-  - Total contributions
-  - Interest earned
-  - Return on investment (ROI)
+  - Total invested funds
+  - Additional funding generated (investment growth)
+  - **Impact Translation (Optional)**
+      - Convert investment growth into real-world outcomes
+      - User-defined inputs:
+          - Impact type (e.g. meals, trees, scholarships)
+          - Cost per unit
+      - Output:
+          - Estimated number of impact units funded by investment growth
+          - Example: $5,000 in investment growth → 100 meals funded (at $50/meal)
+      - *Fully optional — core investment calculations work independently*
+  - ** Growth Chart**
+      - Interactive growht chart that comares total invested capital and total portfolio value over time
 
 ---
 
@@ -36,6 +45,14 @@ The calculator simulates investment growth over time:
    - Final portfolio value
 
 > Note: The model assumes **annual compounding of returns**.
+
+### Impact Layer (Optional)
+
+If enabled:
+
+1. User defines an impact type and cost per unit
+2. The system translates investment growth into:
+   - Number of units funded *(growth ÷ cost per unit)*
 
 ---
 
@@ -73,3 +90,16 @@ venv\Scripts\activate      # Windows
 ### Run the App
 ```uvicorn main:app --reload```
 Run the above line in Terminal, and then open the link.
+
+### Notes
+- Assumes annual compounding of returns
+- Assumes that contributions happen at the end of the period
+- Impact estimates are user-defined and illustrative, not exact projections
+- Designed for:
+    - Financial education
+    - Nonprofit storytelling
+
+### Future Improvements
+- Validation improvements
+  - Currently, if users hit "Calculate" with an invalid input, the tool will do nothing. There is no message letting them know what the issue is.
+  - For the annual return, they should really only be allowed to enter in a number > 1 since the backend assumes a percentage and then converts to a decimal.
