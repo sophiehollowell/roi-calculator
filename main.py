@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from calculation_functions import calculate_investment, generate_schedule
+from calculation_functions import calculate_investment, generate_schedule, translate_impact
+from typing import Optional
 
 app = FastAPI()
 
@@ -11,6 +12,8 @@ class InvestmentRequest(BaseModel):
     years: int
     contribution: float = 0
     frequency: str
+    impact_type: Optional[str] = None
+    impact_cost: Optional[float] = None
 
 @app.post("/calculate")
 def calculate(data: InvestmentRequest):
@@ -31,9 +34,16 @@ def calculate(data: InvestmentRequest):
         frequency=data.frequency
     )
 
+    impact = translate_impact(
+        growth=summary["interest_earned"],
+        impact_type=data.impact_type,
+        impact_cost=data.impact_cost
+    )
+
     return {
         "summary": summary,
-        "schedule": schedule
+        "schedule": schedule,
+        "impact": impact
     }
 
 @app.get("/", response_class=HTMLResponse)
@@ -43,13 +53,14 @@ def root():
     <head>
         <title>ROI Calculator</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
         <style>
             body {
                 margin: 0;
                 font-family: Helvetica, sans-serif;
                 background: #f9fafb;
-                height: 100vh;
+                height: 125vh;
                 display: flex;
             }
 
@@ -232,6 +243,16 @@ def root():
                 font-weight: 600;
             }
 
+            .impactCard {
+                transition: all 0.25s ease;
+                border: 1px solid #eef2f7;
+            }
+
+            .impactCard.active {
+                border: 1px solid #4169df;
+                box-shadow: 0 0 0 3px rgba(65,105,223,0.15);
+            }
+
             /* CHART */
             canvas {
                 background: white;
@@ -286,7 +307,7 @@ def root():
 
             <div class="input-group">
                 <label>
-                    How much will contribute each period?
+                    How much will you contribute each period?
                     <span class="tooltip">ⓘ
                         <span class="tooltip-text">
                             Recurring deposit added each period. This can be $0 if you don't plan to add funds after your initial investment.
@@ -311,15 +332,55 @@ def root():
                 </select>
             </div>
 
+            <div class="input-group">
+                <label>
+                    Impact Translation (Optional)
+                    <span class="tooltip">ⓘ
+                        <span class="tooltip-text">
+                            Translate financial growth into real-world mission impact.
+                        </span>
+                    </span>
+                </label>
+
+                <button type="button" onclick="toggleImpact()" style="background:#e5e7eb;color:#111827;">
+                    Add impact context ▼
+                </button>
+            </div>
+
+            <div id="impactSection" style="display:none; flex-direction:column; gap:12px; padding:12px; border:1px solid #e5e7eb; border-radius:10px; background:#fafafa;">
+
+                <div class="input-group">
+                    <label>What type of impact are you funding?
+                    <span class="tooltip">ⓘ
+                        <span class="tooltip-text">
+                            Example: Meals, scholarships, trees planted, etc.
+                        </span>
+                    </span>
+                    </label>
+                    <input id="impact_type" type="text">
+                </div>
+
+                <div class="input-group">
+                    <label>What is your cost per impact item ($)?
+                        <span class="tooltip">ⓘ
+                        <span class="tooltip-text">
+                            Example: $50 per meal, $2000 per scholarship, $10 per tree, etc.
+                        </span>
+                    </span>
+                    </label>
+                    <input id="impact_cost" type="text">
+                </div>
+            </div>
+
             <button onclick="calculate()">Calculate</button>
         </div>
 
         <!-- MAIN -->
-        <div class="main">
+        <div class="main"id="capture">
 
             <!-- HERO -->
             <div class="callout">
-                <div class="callout-label">This investment will be worth:</div>
+                <div class="callout-label">Your fund could grow to:</div>
                 <div class="callout-value" id="finalValue">$0</div>
                 <div class="callout-sub">Over <span id="yearsLabel">—</span> years</div>
             </div>
@@ -327,19 +388,49 @@ def root():
             <!-- CARDS -->
             <div class="cards">
                 <div class="card">
-                    <h3>Total invested capital</h3>
+                    <h3>Total invested funds
+                        <span class="tooltip">ⓘ
+                        <span class="tooltip-text">
+                            Total amount of funds invested over time (initial + contributions).
+                        </span>
+                    </span>
+                    </h3>
                     <p id="invested">$0</p>
                 </div>
 
                 <div class="card">
-                    <h3>Total growth</h3>
+                    <h3>Additional funding generated
+                        <span class="tooltip">ⓘ
+                        <span class="tooltip-text">
+                            Growth generated by investment returns. This is the “extra” funding your mission earns over time without additional donations.
+                        </span>
+                    </span>
+                    </h3>
                     <p id="simple">$0</p>
+                </div>
+            </div>
+
+            <div class="card impactCard" id="impactCard">
+                <h3>Estimated impact funded
+                <span class="tooltip">ⓘ
+                        <span class="tooltip-text">
+                            Based on investment growth, this estimates how many real-world items your returns could fund.
+                        </span>
+                    </span>
+                </h3>
+
+                <p id="impact" style="font-size:18px; font-weight:600;">
+
+                </p>
+
+                <div id="impactHint" class="helper">
+                    Fill out the impact section to see potential real-world outcomes of your investment.
                 </div>
             </div>
 
             <!-- CHART -->
             <canvas id="chart"></canvas>
-        </div>
+            </div>
 
         <script>
         let chart;
@@ -357,6 +448,11 @@ def root():
 
             return parseFloat(value.replace(/,/g, "")) || 0;
         }
+
+        function toggleImpact() {
+            const el = document.getElementById("impactSection");
+            el.style.display = el.style.display === "none" ? "flex" : "none";
+        }
         
         async function calculate() {
         
@@ -365,7 +461,10 @@ def root():
                 rate: parseFloat(document.getElementById("rate").value) || 0,
                 years: parseInt(document.getElementById("years").value) || 0,
                 contribution: parseNumber("contribution"),
-                frequency: document.getElementById("frequency").value
+                frequency: document.getElementById("frequency").value,
+
+                impact_type: document.getElementById("impact_type").value.trim() || null,
+                impact_cost: parseNumber("impact_cost") || null
             };
         
             const res = await fetch("/calculate", {
@@ -379,6 +478,27 @@ def root():
             const finalValue = data.summary.final_value;
             const invested = data.summary.total_contributed;
             const growth = data.summary.interest_earned;
+
+            const impact = data.impact;
+            const card = document.getElementById("impactCard");
+
+            if (impact && impact.units !== undefined) {
+
+                card.classList.add("active");
+
+                document.getElementById("impact").innerText =
+                    impact.units.toLocaleString() + " " + impact.type;
+
+                document.getElementById("impactHint").style.display = "none";
+
+            } else {
+
+                card.classList.remove("active");
+
+                document.getElementById("impact").innerText = "—";
+
+                document.getElementById("impactHint").style.display = "block";
+            }
         
             // ===== TOP METRICS =====
             document.getElementById("finalValue").innerText = format(finalValue);
