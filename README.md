@@ -100,6 +100,20 @@ Run the above line in Terminal, and then open the link.
     - Nonprofit storytelling
 
 ### Future Improvements
-- Validation improvements
-  - Currently, if users hit "Calculate" with an invalid input, the tool will do nothing. There is no message letting them know what the issue is.
-  - For the annual return, they should really only be allowed to enter in a number > 1 since the backend assumes a percentage and then converts to a decimal.
+- Validation and error handling improvements
+  - Issues:
+      - Currently, if users hit "Calculate" with an invalid input, the tool will do nothing. There is no message letting them know what the issue is.
+      - For the annual return, they should really only be allowed to enter in a number > 1 since the backend assumes a percentage and then converts to a decimal.
+  - Fix:
+      - Proivde clear error messaging when inputs are invalid or missing (e.g., “Please enter a valid number of years” instead of doing nothing)
+      - Enforce input constraints:
+          - Annual return > 0
+          - Years > 0
+          - No negative contributions
+- Input experience and formatting
+  - Standardize input behavior across fields:
+      - Currency fields → support commas (1,000)
+      - Numeric fields (years, rate) → clean number inputs without formatting conflicts
+  - Remove inconsistent UI elements (e.g., browser up/down arrows on some inputs)
+- State persistance
+  - Preserve results on page reload
