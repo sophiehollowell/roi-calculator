@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 FREQUENCY_MAP = {
@@ -16,8 +16,9 @@ def calculate_investment(
     annual_rate: float,
     years: int,
     contribution: float,
-    frequency: str
-) -> Dict:
+    frequency: str,
+    annual_withdrawal: float = 0
+):
 
     annual_rate = normalize_rate(annual_rate)
 
@@ -36,14 +37,22 @@ def calculate_investment(
 
         balance *= (1 + annual_rate)
 
+        if annual_withdrawal:
+            balance -= annual_withdrawal
+
+            if balance < 0:
+                balance = 0
+
     interest = balance - total_contributed
     roi = (interest / total_contributed * 100) if total_contributed > 0 else 0
+    total_withdrawn = annual_withdrawal * years
 
     return {
         "final_value": round(balance, 2),
         "total_contributed": round(total_contributed, 2),
         "interest_earned": round(interest, 2),
-        "roi_percent": round(roi, 2)
+        "roi_percent": round(roi, 2),
+        "total_withdrawn": round(total_withdrawn, 2)
     }
 
 def generate_schedule(
@@ -51,7 +60,8 @@ def generate_schedule(
     annual_rate: float,
     years: int,
     contribution: float,
-    frequency: str
+    frequency: str,
+    annual_withdrawal: float = 0
 ):
     annual_rate = normalize_rate(annual_rate)
 
@@ -69,7 +79,8 @@ def generate_schedule(
 
     schedule.append({
         "year": 0,
-        "balance": round(balance, 2)
+        "balance": round(balance, 2),
+        "withdrawn": 0
     })
 
     for period in range(1, total_periods + 1):
@@ -80,9 +91,33 @@ def generate_schedule(
         if period % periods_per_year == 0:
             year = period // periods_per_year
 
+            withdrawn = annual_withdrawal if annual_withdrawal else 0
+            balance -= withdrawn
+
+            if balance < 0:
+                withdrawn += balance
+                balance = 0
+
             schedule.append({
                 "year": year,
-                "balance": round(balance, 2)
+                "balance": round(balance, 2),
+                "withdrawn": round(withdrawn, 2)
             })
 
     return schedule
+
+def translate_impact(
+        growth: float, 
+        impact_type: Optional[str],
+        impact_cost: Optional[float]
+):
+    if not impact_type or not impact_cost or impact_cost <= 0:
+        return None
+    
+    units = int(growth // impact_cost)
+
+    return {
+        "units": units,
+        "type": impact_type,
+        "cost": impact_cost
+    }
