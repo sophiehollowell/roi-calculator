@@ -27,7 +27,7 @@ It helps users understand how their investments can potentially grow over time, 
           - Estimated number of impact units funded by investment growth
           - Example: $5,000 in investment growth → 100 meals funded (at $50/meal)
       - *Fully optional — core investment calculations work independently*
-  - ** Growth Chart**
+  - **Growth Chart**
       - Interactive growht chart that comares total invested capital and total portfolio value over time
 
 ---
